@@ -19,36 +19,72 @@ function Convert-MSIXToAppAttach {
             ValuefromPipelineByPropertyName = $true
         )]
         [ValidateSet('vhdx', 'cim')]
-        [System.String[]]$Type = 'cim'
+        [System.String[]]$Type = 'cim',
+
+        [Parameter(
+            ValuefromPipelineByPropertyName = $true
+        )]
+        [Switch]$PassThru,
+
+        [Parameter(
+            ValuefromPipelineByPropertyName = $true
+        )]
+        [System.String]$VhdxMultiplier = 5
     )
 
     begin {
         #requires -RunAsAdministrator
         Set-StrictMode -Version Latest
+        
+        . .\Read-XmlManifest.ps1
     } # begin
     process {
-        $pathSplit = $Path.Split('\')
-        $pathRoot = Join-Path $pathSplit[0] $pathSplit[1]
-        $targetRoot = $Path.Replace("$pathRoot", "$DestPath")
         $fileInfo = Get-ChildItem $Path
+        $validExtensions = '.msix','.msixbundle','.appx','.appxbundle'
+        If ($validExtensions -notcontains $fileInfo.Extension){
+            Write-Error "$($fileInfo.Name) is not a valid file format"
+            return
+        }
 
-        $vhdSize = [math]::Round(($fileInfo.Length * 10) / 1MB)
+        $manifest = Read-XmlManifest -PathToPackage $Path
+
+        $version = $manifest.Identity.Version
+
+        $name =  $manifest.Identity.Name
+
+        $vhdSize = [math]::Round(($fileInfo.Length * $VhdxMultiplier) / 1MB)
         if ($vhdSize -lt 100){
             $vhdSize = 100
         }
 
         foreach ($extension in $Type) {
-            $targetPath = $targetRoot.Replace($fileInfo.Extension, ('.' + $extension))
-            $directoryPath = Join-Path $DestPath (Join-Path $pathSplit[2] $pathSplit[3])
+
+            $directoryPath = Join-Path $DestPath (Join-Path $name (Join-Path $version $extension ))
+            $targetPath = (Join-Path $directoryPath $fileInfo.Name).Replace($fileInfo.Extension, ('.' + $extension))
+
             if (Test-Path $targetPath) {
-                return
+                continue
             }
             if (-not(Test-Path $directoryPath)) {
                 New-Item -ItemType Directory $directoryPath | Out-Null
             }
             $result = & 'C:\Program Files\MSIXMGR\msixmgr.exe' -Unpack -packagePath $Path -destination $targetPath -applyacls -create -filetype $extension -rootDirectory apps -vhdSize $vhdSize
 
+            if ($result -like "*Failed*") {
+                Remove-Item $directoryPath -Recurse -Confirm:$False
+                Write-Error "$($fileInfo.Name) failed to extract to $extension"
+                continue
+            }
+            elseif ($result -like "Successfully created the CIM file*" -or $result -like "Finished unpacking packages to*"){
+                $out = [PSCustomObject]@{
+                    FullName = $targetPath
+                }
+                Write-Output $out
+                continue
+            }
+
             $result
+           
         }
 
     } # process

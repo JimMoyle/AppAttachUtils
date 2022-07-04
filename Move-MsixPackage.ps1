@@ -43,7 +43,7 @@ function Move-MSIXPackage {
             New-Item -Path $destinationFolder -ItemType Directory -Force | Out-Null
         }
 
-        $destination = Join-Path $destinationFolder $fileInfo.BaseName
+        $destination = Join-Path $destinationFolder $fileInfo.Name
 
         If (-not (Test-Path $destination)){
             Move-Item -Path $Path -Destination $destination -Force
