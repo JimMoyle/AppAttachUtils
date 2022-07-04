@@ -20,35 +20,31 @@ function Read-XmlManifest {
         $fileInfo = Get-ChildItem -Path $PathToPackage
 
         If ($fileInfo.Extension -like "*bundle*"){
-            $FileToRead = 'AppxBundleManifest.xml'
+            $fileToRead = 'AppxBundleManifest.xml'
         }
         Else {
-            $FileToRead = 'AppxManifest.xml'
+            $fileToRead = 'AppxManifest.xml'
         }
 
         Add-Type -assembly "system.io.compression.filesystem"
         $zip = [io.compression.zipfile]::OpenRead($PathToPackage)
-        $file = $zip.Entries | where-object { $_.Name -eq $FileToRead}
+        $file = $zip.Entries | where-object { $_.Name -eq $fileToRead}
 
         $stream = $file.Open()
         $reader = New-Object IO.StreamReader($stream)
-        $text = $reader.ReadToEnd()
+        [xml]$xml = $reader.ReadToEnd()
 
         $reader.Close()
         $stream.Close()
         $zip.Dispose()
 
-        [xml]$xml = $text
-
-        If ($FileToRead -eq 'AppxBundleManifest.xml'){
+        If ($fileToRead -eq 'AppxBundleManifest.xml'){
             Write-Output $xml.Bundle
         }
         Else {
             Write-Output $xml.Package
         }
-
-        
-        
+       
     } # process
     end {} # end
 }  #function Read-XmlManifest
