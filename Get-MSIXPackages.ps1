@@ -11,7 +11,17 @@ function Get-MSIXPackages {
         [Parameter(
             ValuefromPipelineByPropertyName = $true
         )]
-        [System.String]$DestPath = 'D:\MSIX Packages'
+        [System.String]$DestPath = 'D:\MSIXPackages',
+
+        [Parameter(
+            ValuefromPipelineByPropertyName = $true
+        )]
+        [Switch]$PassThru,
+
+        [Parameter(
+            ValuefromPipelineByPropertyName = $true
+        )]
+        [Switch]$NoDownload
     )
 
     begin {
@@ -24,6 +34,14 @@ function Get-MSIXPackages {
             if ($package.DownloadUrl -like "*.msix*" -or $package.DownloadUrl -like "*.appx*" -or $package.type -eq "MSIX") {
 
                 if ($package.Id -like "Canonical.Ubuntu*" -or $package.Id -like "Debian.Debian*" ){
+                    Continue
+                }
+
+                If ($PassThru) {
+                    Write-Output $package
+                }
+
+                If ($NoDownload){
                     Continue
                 }
 

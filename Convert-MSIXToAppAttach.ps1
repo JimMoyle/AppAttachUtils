@@ -13,7 +13,7 @@ function Convert-MSIXToAppAttach {
         [Parameter(
             ValuefromPipelineByPropertyName = $true
         )]
-        [System.String]$DestPath = 'D:\App Attach Packages',
+        [System.String]$DestPath = 'D:\AppAttachPackages',
 
         [Parameter(
             ValuefromPipelineByPropertyName = $true

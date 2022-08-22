@@ -1,4 +1,6 @@
-Set-Content result.csv -Value 'Name,Id,Version,Publisher,Type,DownloadUrl,MSIX'
+$resultPath = ".\Results\result.csv"
+
+Set-Content $resultPath -Value 'Name,Id,Version,Publisher,Type,DownloadUrl'
 $packages = Import-Csv .\Results\Applist.csv
 #$packages = $packages | Select-Object -First 50
 $packages | ForEach-Object {
@@ -13,6 +15,10 @@ $packages | ForEach-Object {
 
     $DownloadUrl = ($wingetShow | Where-Object { $_ -Like "*Download Url:*" }).split("//")[1].Trim()
 
+    if ($null -eq $DownloadUrl) {
+        $wingetShow
+    }
+
     $out = [PSCustomObject]@{
         Name        = $name
         Id          = $id
@@ -21,5 +27,5 @@ $packages | ForEach-Object {
         Type        = ($wingetShow | Where-Object { $_ -Like "*Type:*" }).split(":")[1].Trim()
         DownloadUrl = $DownloadUrl
     }
-    $out | Export-Csv 'result.csv' -NoClobber -Append
+    $out | Export-Csv $resultPath -NoClobber -Append
 }

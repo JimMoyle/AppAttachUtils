@@ -14,7 +14,7 @@ function Move-MSIXPackage {
         [Parameter(
             ValuefromPipelineByPropertyName = $true
         )]
-        [System.String]$DestPath = 'D:\MSIX Packages'
+        [System.String]$DestPath = 'D:\MSIXPackages'
     )
 
     begin {
