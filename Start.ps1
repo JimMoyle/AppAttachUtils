@@ -7,7 +7,7 @@
 . .\Get-MSIXPackages.ps1
 . .\Sync-PackagesToAzure.ps1
 . .\Get-IconInfo.ps1
-# $files = Get-ChildItem "D:\MSIXPackages\Microsoft.WindowsTerminal\1.14.1962.0\CascadiaPackage_1.14.1962.0_x64.msix" -File 
+#$files = Get-ChildItem "D:\MSIXPackages\Microsoft.WindowsTerminal\1.14.1962.0\CascadiaPackage_1.14.1962.0_x64.msix" -File 
 
 #$files = Get-ChildItem "D:\MSIX Packages" -File -Recurse
 
@@ -31,6 +31,8 @@
 
 #Move-MsixPackage "C:\Users\jimoyle\Downloads\Microsoft.WindowsTerminal_Win10_1.14.1962.0_8wekyb3d8bbwe.msixbundle"
 
-$icons = gci X:\apps\Mozilla.MozillaFirefox_103.0.1.0_x64__gmpnhwe7bv608\Assets | Get-IconInfo
+#$icons = gci X:\apps\Mozilla.MozillaFirefox_103.0.1.0_x64__gmpnhwe7bv608\Assets | Get-IconInfo
 
-$icons | Sort-Object -Property Area -Descending | select -First 1
+#$icons | Sort-Object -Property Area -Descending | select -First 1
+
+Test-AppAttachManifest 'D:\AppAttachPackages\Mozilla.MozillaFirefox\104.0.0.0\cim\Firefox Setup 104.0.cim'

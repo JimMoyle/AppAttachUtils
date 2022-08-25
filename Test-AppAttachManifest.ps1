@@ -32,6 +32,20 @@ function Test-AppAttachManifest {
 
             $mount | Dismount-FslDisk
         }
+
+        If ($fileInfo.Extension -eq '.cim') {
+
+            $mount = Mount-CimDiskImage -ImagePath $Path -PassThru -DriveLetter W:
+
+            if (Get-ChildItem -Path $mount.Path -Filter "Appx*manifest.xml" -Recurse -ErrorAction SilentlyContinue -Force) {
+                $true
+            }
+            else {
+                $false
+            }
+
+            $mount | Dismount-CimDiskImage
+        }
     } # process
     end {} # end
 }  #function Test-AppAttach
