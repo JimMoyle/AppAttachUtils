@@ -1,4 +1,4 @@
-$wgs = winget search
+$wgs = winget search -q `"`"
 
 $appMatch = "(.+)\s+(\S+)\s+(\S+)\s+winget$"
 

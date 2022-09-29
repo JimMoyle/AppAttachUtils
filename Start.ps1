@@ -7,15 +7,15 @@
 . .\Get-MSIXPackages.ps1
 . .\Sync-PackagesToAzure.ps1
 . .\Get-IconInfo.ps1
-#$files = Get-ChildItem "D:\MSIXPackages\Microsoft.WindowsTerminal\1.14.1962.0\CascadiaPackage_1.14.1962.0_x64.msix" -File 
+$files = Get-ChildItem "D:\MSIXPackages\Microsoft.WindowsTerminalPreview\1.15.2282.0\CascadiaPackage_1.15.2282.0_x64.msix" -File 
 
 #$files = Get-ChildItem "D:\MSIX Packages" -File -Recurse
 
 #$files = Get-ChildItem  "D:\App Attach Packages" -File -Recurse -Filter "*.vhdx"
 
-#$files | Convert-MSIXToAppAttach -Type 'cim','vhdx' -PassThru
+$files | Convert-MSIXToAppAttach -Type 'cim','vhdx' -PassThru
 
-#Get-ChildItem C:\Users\jimoyle\Downloads\*.msix* -File | Move-MsixPackage
+Get-ChildItem "C:\Users\jimoyle\Downloads\CascadiaPackage_1.15.2282.0_x64.msix" -File | Move-MsixPackage
 
 #$result = $files | Read-XmlManifest
 
