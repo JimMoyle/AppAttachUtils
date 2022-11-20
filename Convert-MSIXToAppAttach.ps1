@@ -29,7 +29,17 @@ function Convert-MSIXToAppAttach {
         [Parameter(
             ValuefromPipelineByPropertyName = $true
         )]
-        [System.String]$VhdxMultiplier = 5
+        [double]$VhdxMultiplier = 1.2,
+
+        [Parameter(
+            ValuefromPipelineByPropertyName = $true
+        )]
+        [string]$TempExpandPath = 'D:\TempExpand',
+
+        [Parameter(
+            ValuefromPipelineByPropertyName = $true
+        )]
+        [int]$VhdxMultiplierLimit = 21
     )
 
     begin {
@@ -40,8 +50,8 @@ function Convert-MSIXToAppAttach {
     } # begin
     process {
         $fileInfo = Get-ChildItem $Path
-        $validExtensions = '.msix','.msixbundle','.appx','.appxbundle'
-        If ($validExtensions -notcontains $fileInfo.Extension){
+        $validExtensions = '.msix', '.msixbundle', '.appx', '.appxbundle'
+        If ($validExtensions -notcontains $fileInfo.Extension) {
             Write-Error "$($fileInfo.Name) is not a valid file format"
             return
         }
@@ -50,13 +60,25 @@ function Convert-MSIXToAppAttach {
 
         $version = $manifest.Identity.Version
 
-        $name =  $manifest.Identity.Name
+        $name = $manifest.Identity.Name
 
-        $vhdSize = [math]::Round(($fileInfo.Length * $VhdxMultiplier) / 1MB)
-        if ($vhdSize -lt 100){
-            $vhdSize = 100
+        if (Test-Path $TempExpandPath ) {
+            Remove-Item $TempExpandPath -Force -Recurse -Confirm:$False
         }
 
+        New-Item $TempExpandPath -ItemType Directory  | Out-Null
+
+        Expand-Archive -Path $Path -DestinationPath $TempExpandPath 
+
+        $vhdSize = ((Get-ChildItem $TempExpandPath -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB) * $VhdxMultiplier
+
+        $vhdSize = [Math]::Ceiling($vhdSize)
+
+        if ($vhdSize -lt 10) {
+            $vhdSize = 10
+        }
+
+        
         foreach ($extension in $Type) {
 
             $directoryPath = Join-Path $DestPath (Join-Path $name (Join-Path $version $extension ))
@@ -70,22 +92,48 @@ function Convert-MSIXToAppAttach {
             }
             $result = & 'C:\Program Files\MSIXMGR\msixmgr.exe' -Unpack -packagePath $Path -destination $targetPath -applyacls -create -filetype $extension -rootDirectory apps -vhdSize $vhdSize
 
-            if ($result -like "*Failed*") {
-                Remove-Item $directoryPath -Recurse -Confirm:$False
-                Write-Error "$($fileInfo.Name) failed to extract to $extension"
-                continue
+
+            switch ($true) {
+                { $result -like "Successfully created the CIM file*" } { $completed = $true; break }
+                { $result -like "Finished unpacking packages to*" } { $completed = $true; break }
+                { $VhdxMultiplier -gt $VhdxMultiplierLimit } { 
+                    Write-Error "$($fileInfo.Name) failed to extract to $extension with $VhdxMultiplierLimit x expanded package space"
+                    $completed = $False
+                    break
+                }
+                { $result -like "*Failed with HRESULT 0x8bad0003*" } {
+
+                    $splatConvertMSIXToAppAttach = @{
+                        Path           = $Path
+                        DestPath       = $DestPath
+                        Type           = 'vhdx'
+                        PassThru       = $true
+                        VhdxMultiplier = $VhdxMultiplier * 1.5
+                        TempExpandPath = $TempExpandPath
+                    }
+                    Convert-MSIXToAppAttach @splatConvertMSIXToAppAttach
+                    $completed = $false
+                    break
+                }
+                { $result -like "*Failed*" } {
+
+                    $result -match "Failed with HRESULT (\S+) when trying to unpack"
+                    $errorCode = $Matches[1]
+                    Write-Error "$($fileInfo.Name) failed to extract to $extension with error code $errorCode"
+                    break
+                }
+                Default {}
             }
-            elseif ($result -like "Successfully created the CIM file*" -or $result -like "Finished unpacking packages to*"){
+
+            if ($completed) {
                 $out = [PSCustomObject]@{
                     FullName = $targetPath
                 }
                 Write-Output $out
-                continue
-            }
-
-            $result
-           
+            }        
         }
+
+        Remove-Item $TempExpandPath -Force -Recurse -Confirm:$False
 
     } # process
     end {} # end

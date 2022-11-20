@@ -1,4 +1,4 @@
-function Convert-Path {
+function Convert-MsixPath {
     param (
        $url
     )
