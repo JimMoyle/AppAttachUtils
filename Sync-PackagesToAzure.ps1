@@ -14,7 +14,7 @@ function Sync-PackagesToAzure {
             ValuefromPipelineByPropertyName = $true,
             ValuefromPipeline = $true
         )]
-        [System.String]$RemotePath = 'Y:\'
+        [System.String]$RemotePath = 'Y:\AppAttachPackages\'
     )
 
     begin {
@@ -22,7 +22,7 @@ function Sync-PackagesToAzure {
     } # begin
     process {
 
-    Copy-Item $LocalPath $RemotePath -Recurse -Verbose
+        robocopy  $LocalPath $RemotePath /mir
         
     } # process
     end {} # end

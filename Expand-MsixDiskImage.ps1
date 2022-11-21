@@ -1,17 +1,63 @@
-#Expand-MsixDiskImage
+function Expand-MsixDiskImage {
+    [CmdletBinding()]
 
-$ResourceGroupName = 'AVDPermanent'
-$HPName = 'MSIXExtraction'
+    Param (
+        [Parameter(
+            Position = 0,
+            ParameterSetName = 'Path',
+            ValuefromPipelineByPropertyName = $true,
+            ValuefromPipeline = $true,
+            Mandatory = $true
+        )]
+        [System.String[]]$Path,
 
-$splatMsixImage = @{
-    HostPoolName = $HPName
-    ResourceGroupName = $ResourceGroupName
-}
+        [Parameter(
+            ParameterSetName = 'Url',
+            Position = 0,
+            ValuefromPipelineByPropertyName = $true,
+            Mandatory = $true
+        )]
+        [System.String]$Url,
 
-$uri = 'https://avdtoolsmsix.file.core.windows.net/appattach/Mozilla.MozillaFirefox/104.0.0.0/vhdx/Firefox Setup 104.0.vhdx'
+        [Parameter(
+            ValuefromPipelineByPropertyName = $true,
+            Mandatory = $true
+        )]
+        [System.String[]]$HostPoolName,
+        
+        [Parameter(
+            ValuefromPipelineByPropertyName = $true,
+            Mandatory = $true
+        )]
+        [System.String]$ResourceGroupName
+    )
 
-$unc = Convert-MsixPath $uri
+    begin {
+        Set-StrictMode -Version Latest
+    } # begin
+    process {
+        foreach ($hp in $HostpoolName) {
+            if ($pscmdlet.ParameterSetName -eq 'Url') {
+                $uncPath = Convert-MsixPath $Url
+            }
+            Else {
+                $uncPath = $path
+            }
 
-$exp = Expand-AzWvdMsixImage @splatMsixImage -Uri $unc
+            $splatMsixImage = @{
+                HostPoolName      = $hp
+                ResourceGroupName = $ResourceGroupName
+                Uri               = $uncPath
+            }
 
-New-AzWvdMsixPackage @splatMsixImage -PackageAlias mozillamozillafirefox -ImagePath $unc -HostPoolName PooledWin10
+            try {
+                $exp = Expand-AzWvdMsixImage @splatMsixImage -Erroraction Stop
+                Write-Output $exp
+            }
+            catch {
+                Write-Error "$uncPath Failed Expansion"
+            }    
+        }
+    } # process
+    end {} # end
+}  #function Expand-MsixDiskImage
