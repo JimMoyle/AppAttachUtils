@@ -73,6 +73,7 @@ function Test-MsixToAppAttach {
         $msixPackages = foreach ($msixPackage in $files) {
 
             $out = [PSCustomObject]@{
+                DownloadUrl      = $null
                 FileName         = $msixPackage.Name
                 ReadManifest     = $null
                 Name             = $null
@@ -129,9 +130,7 @@ function Test-MsixToAppAttach {
             HostPoolType = 'W11'
             HostPoolName = $W11HostPoolName
         }
-
-    
-        
+ 
         foreach ($diskImage in $msixPackages) {
 
             foreach ($hp in $HPlist) {
