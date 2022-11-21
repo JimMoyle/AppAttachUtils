@@ -28,12 +28,18 @@ function Test-MsixToAppAttach {
         [Parameter(
             ValuefromPipelineByPropertyName = $true
         )]
-        [System.String[]]$HostPoolName = @('Win10MsixTest','Win11MsixTest'),
+        [System.String]$W10HostPoolName = 'Win10MsixTest',
+
+        
+        [Parameter(
+            ValuefromPipelineByPropertyName = $true
+        )]
+        [System.String]$W11HostPoolName = 'Win11MsixTest',
 
         [Parameter(
             ValuefromPipelineByPropertyName = $true
         )]
-        [System.String[]]$ResourceGroupName = 'AVDPermanent'
+        [System.String]$ResourceGroupName = 'AVDPermanent'
 
         
     )
@@ -57,6 +63,9 @@ function Test-MsixToAppAttach {
     } # begin
     process {
 
+        #Temp
+        $MsixPackagePath = Join-Path $MsixPackagePath '33823Nicke.ScreenToGif'
+
         if ($NoDownload) {
             $files = Get-ChildItem $MsixPackagePath -File -Recurse -Filter "*.msix*"
         }
@@ -64,14 +73,19 @@ function Test-MsixToAppAttach {
         $msixPackages = foreach ($msixPackage in $files) {
 
             $out = [PSCustomObject]@{
-                FileName      = $msixPackage.Name
-                ReadManifest  = $null
-                Name          = $null
-                Version       = $null
-                ConvertToCim  = $null
-                ConvertToVhdx = $null
-                CimPath       = $null
-                VhdxPath      = $null
+                FileName         = $msixPackage.Name
+                ReadManifest     = $null
+                Name             = $null
+                Version          = $null
+                ConvertToCim     = $null
+                ConvertToVhdx    = $null
+                CimPath          = $null
+                VhdxPath         = $null
+                W10CimExpansion  = $null
+                W10VhdxExpansion = $null
+                W11CimExpansion  = $null
+                W11VhdxExpansion = $null
+                PackageAlias     = $null
             }
 
             try {
@@ -106,18 +120,50 @@ function Test-MsixToAppAttach {
             Write-Output $out
         }
 
-        Sync-PackagesToAzure  
-        
-        foreach ($diskImage in $msixPackages){
+        Sync-PackagesToAzure
 
-            foreach ($hp  in $HostPoolName) {
-                if($diskImage.ConvertToCim){
-                    Expand-MsixDiskImage
+        $HPlist = [PSCustomObject]@{
+            HostPoolType = 'W10'
+            HostPoolName = $W10HostPoolName
+        }, [PSCustomObject]@{
+            HostPoolType = 'W11'
+            HostPoolName = $W11HostPoolName
+        }
+
+    
+        
+        foreach ($diskImage in $msixPackages) {
+
+            foreach ($hp in $HPlist) {
+                if ($diskImage.ConvertToCim) {
+
+                    $azFilesPath = $diskImage.CimPath.Replace('D:\AppAttachPackages', '\\avdtoolsmsix.file.core.windows.net\appattach\AppAttachPackages')
+                    $propClient = $hp.HostPoolType + 'CimExpansion'
+                    try {
+                        $cimExpand = Expand-MsixDiskImage -HostPoolName $hp.HostPoolName -ResourceGroupName $ResourceGroupName -Path $azFilesPath -ErrorAction Stop
+                        $diskImage.PackageAlias = $cimExpand.PackageAlias
+                        
+                        $diskImage.$propClient = $true
+                    }
+                    catch {
+                        $diskImage.$propClient = $false
+                    }
+                }
+                if ($diskImage.ConvertToVhdx) {
+
+                    $azFilesPath = $diskImage.VhdxPath.Replace('D:\AppAttachPackages', '\\avdtoolsmsix.file.core.windows.net\appattach\AppAttachPackages')
+                    $propClient = $hp.HostPoolType + 'VhdxExpansion'
+                    try {
+                        $VhdxExpand = Expand-MsixDiskImage -HostPoolName $hp.HostPoolName -ResourceGroupName $ResourceGroupName -Path $azFilesPath -ErrorAction Stop
+                        $diskImage.PackageAlias = $VhdxExpand.PackageAlias
+                        $diskImage.$propClient = $true
+                    }
+                    catch {
+                        $diskImage.$propClient = $false
+                    }
                 }
             }
-
-
-            $diskImage | Expand-MsixDiskImage
+            Write-Output $diskImage
         }
 
     } # process

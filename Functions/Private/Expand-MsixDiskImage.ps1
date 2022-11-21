@@ -9,7 +9,7 @@ function Expand-MsixDiskImage {
             ValuefromPipeline = $true,
             Mandatory = $true
         )]
-        [System.String[]]$Path,
+        [System.String]$Path,
 
         [Parameter(
             ParameterSetName = 'Url',
