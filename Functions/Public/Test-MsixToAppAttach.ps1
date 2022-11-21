@@ -23,7 +23,19 @@ function Test-MsixToAppAttach {
         [Parameter(
             ValuefromPipelineByPropertyName = $true
         )]
-        [System.String]$AzurePackagePath = "Y:\AppAttachPackages"
+        [System.String]$AzurePackagePath = "Y:\AppAttachPackages",
+
+        [Parameter(
+            ValuefromPipelineByPropertyName = $true
+        )]
+        [System.String[]]$HostPoolName = @('Win10MsixTest','Win11MsixTest'),
+
+        [Parameter(
+            ValuefromPipelineByPropertyName = $true
+        )]
+        [System.String[]]$ResourceGroupName = 'AVDPermanent'
+
+        
     )
 
     begin {
@@ -49,7 +61,7 @@ function Test-MsixToAppAttach {
             $files = Get-ChildItem $MsixPackagePath -File -Recurse -Filter "*.msix*"
         }
 
-        foreach ($msixPackage in $files) {
+        $msixPackages = foreach ($msixPackage in $files) {
 
             $out = [PSCustomObject]@{
                 FileName      = $msixPackage.Name
@@ -58,6 +70,8 @@ function Test-MsixToAppAttach {
                 Version       = $null
                 ConvertToCim  = $null
                 ConvertToVhdx = $null
+                CimPath       = $null
+                VhdxPath      = $null
             }
 
             try {
@@ -74,10 +88,12 @@ function Test-MsixToAppAttach {
 
             foreach ($type in @('Cim', 'Vhdx')) {
 
-                $property = 'ConvertTo' + $Type
+                $property = 'ConvertTo' + $type
+                $imagePathProp = $type + 'Path'
 
                 try {
-                    $msixPackage | Convert-MSIXToAppAttach -Type $Type -ErrorAction Stop
+                    $diskImagePath = $msixPackage | Convert-MSIXToAppAttach -Type $type -ErrorAction Stop -PassThru
+                    $out.$imagePathProp = $diskImagePath.FullName
                     $out.$property = $true
                 }
                 catch {
@@ -85,18 +101,25 @@ function Test-MsixToAppAttach {
                     Write-Output $out
                     continue
                 }
-
-                Sync-PackagesToAzure
-          
-       
-                Write-Output $out
+   
             }
-
+            Write-Output $out
         }
 
+        Sync-PackagesToAzure  
         
+        foreach ($diskImage in $msixPackages){
 
-        
+            foreach ($hp  in $HostPoolName) {
+                if($diskImage.ConvertToCim){
+                    Expand-MsixDiskImage
+                }
+            }
+
+
+            $diskImage | Expand-MsixDiskImage
+        }
+
     } # process
     end {} # end
 }  #function Test-MsixToAppAttach

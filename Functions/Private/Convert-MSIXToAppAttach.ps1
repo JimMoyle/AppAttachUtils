@@ -85,6 +85,12 @@ function Convert-MSIXToAppAttach {
             $targetPath = (Join-Path $directoryPath $fileInfo.Name).Replace($fileInfo.Extension, ('.' + $extension))
 
             if (Test-Path $targetPath) {
+                if ($PassThru){
+                    $out = [PSCustomObject]@{
+                        FullName = $targetPath
+                    }
+                    Write-Output $out
+                }
                 continue
             }
             if (-not(Test-Path $directoryPath)) {
@@ -102,6 +108,7 @@ function Convert-MSIXToAppAttach {
                     break
                 }
                 { $result -like "*Failed with HRESULT 0x8bad0003*" } {
+                    Write-Warning "retrying $Path due to vhdx size too small"
 
                     $splatConvertMSIXToAppAttach = @{
                         Path           = $Path
@@ -125,7 +132,7 @@ function Convert-MSIXToAppAttach {
                 Default {}
             }
 
-            if ($completed) {
+            if ($completed -and $PassThru) {
                 $out = [PSCustomObject]@{
                     FullName = $targetPath
                 }
