@@ -1,15 +1,6 @@
-. .\Convert-MSIXToAppAttach.ps1
-. .\Move-MsixPackage.ps1
-. .\Read-XmlManifest.ps1
-. .\Mount-FslDisk.ps1
-. .\Dismount-FslDisk.ps1
-. .\Test-AppAttachManifest.ps1
-. .\Get-MSIXPackages.ps1
-. .\Sync-PackagesToAzure.ps1
-. .\Get-IconInfo.ps1
-. .\Get-WPMRestApp.ps1
-. .\Convert-MsixPath.ps1
-. .\Expand-MsixDiskImage.ps1
+. .\Functions\Public\Test-MsixToAppAttach.ps1
+
+Test-MsixToAppAttach -NoDownload
 <#
 $a = Import-Csv Results\20221117T1259-FullAppList.csv
 
@@ -52,4 +43,4 @@ Import-Csv Results\20221117T1307-MsixApps.csv | Where-Object {$_.architecture -e
 #Test-AppAttachManifest 'D:\AppAttachPackages\Mozilla.MozillaFirefox\104.0.0.0\cim\Firefox Setup 104.0.cim'
 #Sync-PackagesToAzure -Verbose
 
-Expand-MsixDiskImage -Url 'https://avdtoolsmsix.file.core.windows.net/appattach/AppAttachPackages/Mozilla.MozillaFirefox/107.0.0.0/cim/Firefox Setup 107.0.cim' -HostPoolName 'Win10MsixTest' -ResourceGroupName 'AVDPermanent'
+#Expand-MsixDiskImage -Url 'https://avdtoolsmsix.file.core.windows.net/appattach/AppAttachPackages/Mozilla.MozillaFirefox/107.0.0.0/vhdx/Firefox%20Setup%20107.0.vhdx' -HostPoolName 'Win10MsixTest' -ResourceGroupName 'AVDPermanent'

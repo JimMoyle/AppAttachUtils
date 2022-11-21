@@ -46,7 +46,7 @@ function Convert-MSIXToAppAttach {
         #requires -RunAsAdministrator
         Set-StrictMode -Version Latest
         
-        . .\Read-XmlManifest.ps1
+        #. .\Read-XmlManifest.ps1
     } # begin
     process {
         $fileInfo = Get-ChildItem $Path
