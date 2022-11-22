@@ -3,26 +3,32 @@ function Sync-PackagesToAzure {
 
     Param (
         [Parameter(
-            Position = 0,
-            ValuefromPipelineByPropertyName = $true,
-            ValuefromPipeline = $true
+            ValuefromPipelineByPropertyName = $true
         )]
         [System.String]$LocalPath = "D:\AppAttachPackages\",
 
         [Parameter(
-            Position = 0,
-            ValuefromPipelineByPropertyName = $true,
-            ValuefromPipeline = $true
+            ValuefromPipelineByPropertyName = $true
         )]
-        [System.String]$RemotePath = 'Y:\AppAttachPackages\'
+        [System.String]$RemotePath = 'Y:\AppAttachPackages\',
+
+        [Parameter(
+            ValuefromPipelineByPropertyName = $true
+        )]
+        [Switch]$NoMirror
     )
 
     begin {
         Set-StrictMode -Version Latest
     } # begin
     process {
-
-        robocopy  $LocalPath $RemotePath /mir
+        if ($NoMirror) {
+            robocopy $LocalPath $RemotePath
+        }
+        else {
+            robocopy $LocalPath $RemotePath /mir
+        }
+        
         
     } # process
     end {} # end
