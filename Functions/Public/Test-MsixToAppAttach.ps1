@@ -13,12 +13,12 @@ function Test-MsixToAppAttach {
         [Parameter(
             ValuefromPipelineByPropertyName = $true
         )]
-        [System.String]$MsixPackagePath = "D:\MSIXPackages",
+        [System.String]$MsixPackagePath = "C:\MSIXPackages",
 
         [Parameter(
             ValuefromPipelineByPropertyName = $true
         )]
-        [System.String]$AppAttachPackagePath = "D:\AppAttachPackages",
+        [System.String]$AppAttachPackagePath = "C:\AppAttachPackages",
 
         [Parameter(
             ValuefromPipelineByPropertyName = $true
@@ -40,14 +40,13 @@ function Test-MsixToAppAttach {
             ValuefromPipelineByPropertyName = $true
         )]
         [System.String]$ResourceGroupName = 'AVDPermanent'
-
         
     )
 
     begin {
         Set-StrictMode -Version Latest
 
-        $Private = @( Get-ChildItem -Path D:\GitHub\AppAttachUtils\Functions\Private\*.ps1 -ErrorAction SilentlyContinue )
+        $Private = @( Get-ChildItem -Path Functions\Private\*.ps1 -ErrorAction SilentlyContinue )
 
         #Dot source the files
         Foreach ($import in $Private) {
@@ -64,7 +63,7 @@ function Test-MsixToAppAttach {
     process {
 
         #Temp
-        $MsixPackagePath = Join-Path $MsixPackagePath '33823Nicke.ScreenToGif'
+        $MsixPackagePath = Join-Path $MsixPackagePath '19282JackieLiu.Notepads-Beta'
 
         if ($NoDownload) {
             $files = Get-ChildItem $MsixPackagePath -File -Recurse -Filter "*.msix*"
@@ -73,20 +72,29 @@ function Test-MsixToAppAttach {
         $msixPackages = foreach ($msixPackage in $files) {
 
             $out = [PSCustomObject]@{
-                DownloadUrl      = $null
-                FileName         = $msixPackage.Name
-                ReadManifest     = $null
-                Name             = $null
-                Version          = $null
-                ConvertToCim     = $null
-                ConvertToVhdx    = $null
-                CimPath          = $null
-                VhdxPath         = $null
-                W10CimExpansion  = $null
-                W10VhdxExpansion = $null
-                W11CimExpansion  = $null
-                W11VhdxExpansion = $null
-                PackageAlias     = $null
+                DownloadUrl          = $null
+                FileName             = $msixPackage.Name
+                ReadManifest         = $null
+                Name                 = $null
+                PackageFamilyName    = $null
+                PackageFullName      = $null
+                Version              = $null
+                ConvertToCim         = $null
+                ConvertToVhdx        = $null
+                CimPath              = $null
+                VhdxPath             = $null
+                W10CimExpansion      = $null
+                W10VhdxExpansion     = $null
+                W11CimExpansion      = $null
+                W11VhdxExpansion     = $null
+                W10CimPackageCreate  = $null
+                W10VhdxPackageCreate = $null
+                W11CimPackageCreate  = $null
+                W11VhdxPackageCreate = $null
+                W10DesktopAssign     = $null
+                W11DesktopAssign     = $null
+                Win10AppStart        = $null
+                Win11AppStart        = $null
             }
 
             try {
@@ -107,7 +115,7 @@ function Test-MsixToAppAttach {
                 $imagePathProp = $type + 'Path'
 
                 try {
-                    $diskImagePath = $msixPackage | Convert-MSIXToAppAttach -Type $type -ErrorAction Stop -PassThru
+                    $diskImagePath = $msixPackage | Convert-MSIXToAppAttach -Type $type -ErrorAction Stop -PassThru -DestPath $AppAttachPackagePath
                     $out.$imagePathProp = $diskImagePath.FullName
                     $out.$property = $true
                 }
@@ -121,7 +129,7 @@ function Test-MsixToAppAttach {
             Write-Output $out
         }
 
-        Sync-PackagesToAzure
+        Sync-PackagesToAzure -LocalPath $AppAttachPackagePath -RemotePath $AzurePackagePath
 
         $HPlist = [PSCustomObject]@{
             HostPoolType = 'W10'
@@ -134,37 +142,112 @@ function Test-MsixToAppAttach {
         foreach ($diskImage in $msixPackages) {
 
             foreach ($hp in $HPlist) {
-                if ($diskImage.ConvertToCim) {
-
-                    $azFilesPath = $diskImage.CimPath.Replace('D:\AppAttachPackages', '\\avdtoolsmsix.file.core.windows.net\appattach\AppAttachPackages')
-                    $propClient = $hp.HostPoolType + 'CimExpansion'
-                    try {
-                        $cimExpand = Expand-MsixDiskImage -HostPoolName $hp.HostPoolName -ResourceGroupName $ResourceGroupName -Path $azFilesPath -ErrorAction Stop
-                        $diskImage.PackageAlias = $cimExpand.PackageAlias
-                        
-                        $diskImage.$propClient = $true
-                    }
-                    catch {
-                        $diskImage.$propClient = $false
-                    }
-                }
                 if ($diskImage.ConvertToVhdx) {
-
-                    $azFilesPath = $diskImage.VhdxPath.Replace('D:\AppAttachPackages', '\\avdtoolsmsix.file.core.windows.net\appattach\AppAttachPackages')
+                    $vhdxExpand = $null
+                    $azFilesPath = $diskImage.VhdxPath.Replace($AppAttachPackagePath, '\\avdtoolsmsix.file.core.windows.net\appattach\AppAttachPackages')
                     $propClient = $hp.HostPoolType + 'VhdxExpansion'
                     try {
-                        $VhdxExpand = Expand-MsixDiskImage -HostPoolName $hp.HostPoolName -ResourceGroupName $ResourceGroupName -Path $azFilesPath -ErrorAction Stop
-                        $diskImage.PackageAlias = $VhdxExpand.PackageAlias
+                        $vhdxExpandAll = Expand-MsixDiskImage -HostPoolName $hp.HostPoolName -ResourceGroupName $ResourceGroupName -Path $azFilesPath -ErrorAction Stop
+                        $vhdxExpand = $vhdxExpandAll[0]
                         $diskImage.$propClient = $true
+                        $diskImage.PackageFamilyName = $vhdxExpand.PackageFamilyName
+                        $diskImage.PackageFullName = $vhdxExpand.PackageFullName
                     }
                     catch {
                         $diskImage.$propClient = $false
                     }
+
+                    $createProp = $hp.HostPoolType + 'VhdxPackageCreate'
+
+                    if ($diskImage.$propClient) {
+                        $splatNewAzWvdMsixPackage = @{
+                            ResourceGroupName     = $ResourceGroupName
+                            ErrorAction           = 'Stop'
+                            HostPoolName          = $hp.HostPoolName
+                            FullName              = $vhdxExpand.PackageFullName
+                            LastUpdated           = $vhdxExpand.LastUpdated
+                            PackageApplication    = $vhdxExpand.PackageApplication
+                            PackageDependency     = $vhdxExpand.PackageDependency
+                            PackageFamilyName     = $vhdxExpand.PackageFamilyName
+                            PackageRelativePath   = $vhdxExpand.PackageRelativePath
+                            Version               = $vhdxExpand.Version
+                            PackageName           = $vhdxExpand.PackageName
+                            IsActive              = $true
+                            IsRegularRegistration = $false
+                            ImagePath             = $azFilesPath
+                            DisplayName           = 'Vhdx' + $vhdxExpand.PackageName
+                        }
+                        $createProp = $hp.HostPoolType + 'VhdxPackageCreate'
+                        try {
+                            New-AzWvdMsixPackage @splatNewAzWvdMsixPackage | Out-Null
+                            $diskImage.$createProp = $true
+                        }
+                        catch {
+                            $diskImage.$createProp = $false
+                        }
+                    }
+                    else{
+                        $diskImage.$createProp = $false
+                    }
                 }
+                if ($diskImage.ConvertToCim) {
+                    $cimExpand = $null
+                    $azFilesPath = $diskImage.CimPath.Replace($AppAttachPackagePath, '\\avdtoolsmsix.file.core.windows.net\appattach\AppAttachPackages')
+                    $propClient = $hp.HostPoolType + 'CimExpansion'
+                    try {
+                        $cimExpandAll = Expand-MsixDiskImage -HostPoolName $hp.HostPoolName -ResourceGroupName $ResourceGroupName -Path $azFilesPath -ErrorAction Stop
+                        $cimExpand = $cimExpandAll[0]
+                        $diskImage.$propClient = $true
+                        $diskImage.PackageFamilyName = $cimExpand.PackageFamilyName
+                        $diskImage.PackageFullName = $cimExpand.PackageFullName
+                    }
+                    catch {
+                        $diskImage.$propClient = $false
+                    }
+
+                    $removeProp = $hp.HostPoolType + 'VhdxPackageCreate'
+
+                    if ($diskImage.$removeProp -and $diskImage.$propClient) {
+                        Remove-AzWvdMsixPackage -HostPoolName $hp.HostPoolName -ResourceGroupName  $ResourceGroupName -FullName $cimExpand.PackageFullName
+                    }
+                    
+                    $createProp = $hp.HostPoolType + 'CimPackageCreate'
+
+                    if ($diskImage.$propClient) {
+                        $splatNewAzWvdMsixPackage = @{
+                            ResourceGroupName     = $ResourceGroupName
+                            ErrorAction           = 'Stop'
+                            HostPoolName          = $hp.HostPoolName
+                            FullName              = $cimExpand.PackageFullName
+                            LastUpdated           = $cimExpand.LastUpdated
+                            PackageApplication    = $cimExpand.PackageApplication
+                            PackageDependency     = $cimExpand.PackageDependency
+                            PackageFamilyName     = $cimExpand.PackageFamilyName
+                            PackageRelativePath   = $cimExpand.PackageRelativePath
+                            Version               = $cimExpand.Version
+                            PackageName           = $cimExpand.PackageName
+                            IsActive              = $true
+                            IsRegularRegistration = $false
+                            ImagePath             = $azFilesPath
+                            DisplayName           = 'Cim' + $cimExpand.PackageName
+                        }
+                        
+                        try {
+                            New-AzWvdMsixPackage @splatNewAzWvdMsixPackage | Out-Null
+                            $diskImage.$createProp = $true
+                        }
+                        catch {
+                            $diskImage.$createProp = $false
+                        }
+                    }
+                    else{
+                        $diskImage.$createProp = $false
+                    }
+                }
+                
             }
             Write-Output $diskImage
         }
-
     } # process
     end {} # end
 }  #function Test-MsixToAppAttach

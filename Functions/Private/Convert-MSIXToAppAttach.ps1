@@ -34,7 +34,7 @@ function Convert-MSIXToAppAttach {
         [Parameter(
             ValuefromPipelineByPropertyName = $true
         )]
-        [string]$TempExpandPath = 'D:\TempExpand',
+        [string]$TempExpandPath = 'C:\TempExpand',
 
         [Parameter(
             ValuefromPipelineByPropertyName = $true

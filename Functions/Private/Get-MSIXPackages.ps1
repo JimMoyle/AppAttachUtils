@@ -30,7 +30,7 @@ function Get-MSIXPackages {
     )
 
     begin {
-        . .\Read-XmlManifest.ps1
+        . .\Functions\Private\Read-XmlManifest.ps1
         Set-StrictMode -Version Latest
     } # begin
     process {

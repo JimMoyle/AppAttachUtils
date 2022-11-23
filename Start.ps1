@@ -1,13 +1,28 @@
+$Private = @( Get-ChildItem -Path Functions\Private\*.ps1 -ErrorAction SilentlyContinue )
+
+#Dot source the files
+Foreach ($import in $Private) {
+    Try {
+        Write-Verbose "Importing $($Import.FullName)"
+        . $import.fullname
+    }
+    Catch {
+        Write-Error -Message "Failed to import function $($import.fullname): $_"
+    }
+}
+
 . .\Functions\Public\Test-MsixToAppAttach.ps1
 
-Test-MsixToAppAttach -NoDownload
+$result = Test-MsixToAppAttach -NoDownload
+
+$result | Export-Csv Results\final.csv
 <#
-$a = Import-Csv Results\20221117T1259-FullAppList.csv
+$a = Import-Csv Results\20221122T1245-FullAppList.csv
 
 $msixResult = $a | ForEach-Object -Parallel {
-    . .\Get-WPMRestApp.ps1
+    . .\Functions\Private\Get-WPMRestApp.ps1
    $_ | Get-WPMRestApp
-} -ThrottleLimit 32
+} -ThrottleLimit 16
 
 $filename = (get-date -Format FileDateTime).Substring(0, 13) + '-MsixApps.csv'
 
@@ -17,10 +32,10 @@ $msixResult | Export-Csv (Join-Path '.\results' $filename) -Force
 <#
 $filename = (get-date -Format FileDateTime).Substring(0, 13) + '-x64MsixApps.csv'
 
-Import-Csv Results\20221117T1307-MsixApps.csv | Where-Object {$_.architecture -eq 'x64'} | Export-Csv (Join-Path '.\results' $filename) -Force
+Import-Csv Results\20221122T1253-MsixApps.csv | Where-Object {$_.architecture -eq 'x64'} | Export-Csv (Join-Path '.\results' $filename) -Force
 #>
 
-#Get-MSIXPackages -ListPath Results\20221117T1310-x64MsixApps.csv -PassThru
+#Get-MSIXPackages -ListPath Results\20221122T1256-x64MsixApps.csv -PassThru -DestPath C:\MSIXPackages
 
 #$files = Get-ChildItem "D:\MSIXPackages\Microsoft.WindowsTerminalPreview\1.15.2282.0\CascadiaPackage_1.15.2282.0_x64.msix" -File 
 

@@ -15,7 +15,12 @@ function Sync-PackagesToAzure {
         [Parameter(
             ValuefromPipelineByPropertyName = $true
         )]
-        [Switch]$NoMirror
+        [Switch]$NoMirror,
+
+        [Parameter(
+            ValuefromPipelineByPropertyName = $true
+        )]
+        [Switch]$PassThru
     )
 
     begin {
@@ -23,10 +28,14 @@ function Sync-PackagesToAzure {
     } # begin
     process {
         if ($NoMirror) {
-            robocopy $LocalPath $RemotePath
+            $roboresult = robocopy $LocalPath $RemotePath /s /xx
         }
         else {
-            robocopy $LocalPath $RemotePath /mir
+            $roboresult = robocopy $LocalPath $RemotePath /mir
+        }
+
+        if ($PassThru) {
+            Write-Output $roboresult
         }
         
         
