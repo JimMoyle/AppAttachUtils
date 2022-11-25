@@ -13,12 +13,12 @@ function Test-MsixToAppAttach {
         [Parameter(
             ValuefromPipelineByPropertyName = $true
         )]
-        [System.String]$MsixPackagePath = "C:\MSIXPackages",
+        [System.String]$MsixPackagePath = "D:\MSIXPackages",
 
         [Parameter(
             ValuefromPipelineByPropertyName = $true
         )]
-        [System.String]$AppAttachPackagePath = "C:\AppAttachPackages",
+        [System.String]$AppAttachPackagePath = "D:\AppAttachPackages",
 
         [Parameter(
             ValuefromPipelineByPropertyName = $true
@@ -139,7 +139,7 @@ function Test-MsixToAppAttach {
             HostPoolName = $W11HostPoolName
         }
  
-        foreach ($diskImage in $msixPackages) {
+        $msixPackages = foreach ($diskImage in $msixPackages) {
 
             foreach ($hp in $HPlist) {
                 if ($diskImage.ConvertToVhdx) {
@@ -243,11 +243,43 @@ function Test-MsixToAppAttach {
                     else{
                         $diskImage.$createProp = $false
                     }
-                }
-                
+                }               
             }
             Write-Output $diskImage
         }
+
+        $msixPackages = foreach ($package in $msixPackages) {
+            foreach ($hp in $HPlist) {
+                foreach ($format in @('Cim','Vhdx')) {
+                    $createProp = $hp.HostPoolType + $format + 'PackageCreate'
+                    
+                    $assignProp = $hp.HostPoolType + 'DesktopAssign'
+
+                    $dagName = $hp.HostPoolType + 'MSIXTest-DAG'
+
+                    $splatNewAzWvdApplication = @{
+                        HostPoolName = $hp.HostPoolName 
+                        ResourceGroupName  = $ResourceGroupName
+                        ErrorAction = 'Stop'
+                        GroupName = $dagName
+                        ApplicationType = 'MsixApplication'
+                        FriendlyName = $format + $package.Name
+                    }
+                    
+                    if ($package.$createProp -and (-not ($package.$assignProp))) {
+                        try {
+                            New-AzWvdApplication @splatNewAzWvdApplication
+                            $package.$assignProp = $true
+                        }
+                        catch {
+                            $package.$assignProp = $false
+                        }
+                    }
+                    
+                }
+            }
+        }
+
     } # process
     end {} # end
 }  #function Test-MsixToAppAttach
