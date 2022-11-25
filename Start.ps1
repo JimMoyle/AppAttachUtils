@@ -13,7 +13,7 @@ Foreach ($import in $Private) {
 
 . .\Functions\Public\Test-MsixToAppAttach.ps1
 
-$result = Test-MsixToAppAttach -NoDownload
+$result = Test-MsixToAppAttach -NoDownload -SyncOption NoSync
 
 $result | Export-Csv Results\final.csv
 <#

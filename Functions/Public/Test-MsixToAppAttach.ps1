@@ -29,12 +29,17 @@ function Test-MsixToAppAttach {
             ValuefromPipelineByPropertyName = $true
         )]
         [System.String]$W10HostPoolName = 'Win10MsixTest',
-
         
         [Parameter(
             ValuefromPipelineByPropertyName = $true
         )]
         [System.String]$W11HostPoolName = 'Win11MsixTest',
+
+        [Parameter(
+            ValuefromPipelineByPropertyName = $true
+        )]
+        [ValidateSet('NoSync', 'Mirror', 'Copy')]
+        [System.String]$SyncOption = 'Copy',
 
         [Parameter(
             ValuefromPipelineByPropertyName = $true
@@ -129,7 +134,11 @@ function Test-MsixToAppAttach {
             Write-Output $out
         }
 
-        Sync-PackagesToAzure -LocalPath $AppAttachPackagePath -RemotePath $AzurePackagePath
+        switch ($SyncOption) {
+            NoSync { break }
+            Mirrror { Sync-PackagesToAzure -LocalPath $AppAttachPackagePath -RemotePath $AzurePackagePat; break }
+            Copy { Sync-PackagesToAzure -LocalPath $AppAttachPackagePath -RemotePath $AzurePackagePath -NoMirror; break }
+        }
 
         $HPlist = [PSCustomObject]@{
             HostPoolType = 'W10'
@@ -186,7 +195,7 @@ function Test-MsixToAppAttach {
                             $diskImage.$createProp = $false
                         }
                     }
-                    else{
+                    else {
                         $diskImage.$createProp = $false
                     }
                 }
@@ -240,7 +249,7 @@ function Test-MsixToAppAttach {
                             $diskImage.$createProp = $false
                         }
                     }
-                    else{
+                    else {
                         $diskImage.$createProp = $false
                     }
                 }               
@@ -248,27 +257,29 @@ function Test-MsixToAppAttach {
             Write-Output $diskImage
         }
 
-        $msixPackages = foreach ($package in $msixPackages) {
+        foreach ($package in $msixPackages) {
             foreach ($hp in $HPlist) {
-                foreach ($format in @('Cim','Vhdx')) {
+                foreach ($format in @('Cim', 'Vhdx')) {
                     $createProp = $hp.HostPoolType + $format + 'PackageCreate'
                     
                     $assignProp = $hp.HostPoolType + 'DesktopAssign'
 
-                    $dagName = $hp.HostPoolType + 'MSIXTest-DAG'
+                    $dagName = 'Win' + $hp.HostPoolType.Substring(1,2) + 'MSIXTest-DAG'
 
                     $splatNewAzWvdApplication = @{
-                        HostPoolName = $hp.HostPoolName 
-                        ResourceGroupName  = $ResourceGroupName
-                        ErrorAction = 'Stop'
-                        GroupName = $dagName
-                        ApplicationType = 'MsixApplication'
-                        FriendlyName = $format + $package.Name
+                        ResourceGroupName     = $ResourceGroupName
+                        Name                  = $package.Name
+                        ApplicationType       = 'MsixApplication'
+                        ApplicationGroupName  = $dagName
+                        MsixPackageFamilyName = $package.PackageFamilyName
+                        FriendlyName          = $format + $package.Name
+                        CommandLineSetting    = 0
+                        ErrorAction           = 'Stop'
                     }
-                    
+                 
                     if ($package.$createProp -and (-not ($package.$assignProp))) {
                         try {
-                            New-AzWvdApplication @splatNewAzWvdApplication
+                            New-AzWvdApplication @splatNewAzWvdApplication | Out-Null
                             $package.$assignProp = $true
                         }
                         catch {
@@ -277,7 +288,11 @@ function Test-MsixToAppAttach {
                     }
                     
                 }
+                if ($null -eq $package.$assignProp){
+                    $package.$assignProp = $false
+                }
             }
+            Write-Output $package
         }
 
     } # process
