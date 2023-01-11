@@ -68,7 +68,7 @@ function Test-MsixToAppAttach {
     process {
 
         #Temp
-        $MsixPackagePath = Join-Path $MsixPackagePath '19282JackieLiu.Notepads-Beta'
+        #$MsixPackagePath = Join-Path $MsixPackagePath 'PascalBerger.MSIXCommander'
 
         if ($NoDownload) {
             $files = Get-ChildItem $MsixPackagePath -File -Recurse -Filter "*.msix*"
@@ -147,12 +147,14 @@ function Test-MsixToAppAttach {
             HostPoolType = 'W11'
             HostPoolName = $W11HostPoolName
         }
+        if ($TestAllDiskImages) {
+            $msixPackages = 
+        }
  
         $msixPackages = foreach ($diskImage in $msixPackages) {
 
             foreach ($hp in $HPlist) {
                 if ($diskImage.ConvertToVhdx) {
-                    $vhdxExpand = $null
                     $azFilesPath = $diskImage.VhdxPath.Replace($AppAttachPackagePath, '\\avdtoolsmsix.file.core.windows.net\appattach\AppAttachPackages')
                     $propClient = $hp.HostPoolType + 'VhdxExpansion'
                     try {
@@ -200,7 +202,6 @@ function Test-MsixToAppAttach {
                     }
                 }
                 if ($diskImage.ConvertToCim) {
-                    $cimExpand = $null
                     $azFilesPath = $diskImage.CimPath.Replace($AppAttachPackagePath, '\\avdtoolsmsix.file.core.windows.net\appattach\AppAttachPackages')
                     $propClient = $hp.HostPoolType + 'CimExpansion'
                     try {

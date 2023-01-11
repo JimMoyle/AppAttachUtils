@@ -11,13 +11,25 @@ Foreach ($import in $Private) {
     }
 }
 
-. .\Functions\Public\Test-MsixToAppAttach.ps1
+#. .\Functions\Public\Test-MsixToAppAttach.ps1
 
-$result = Test-MsixToAppAttach -NoDownload -SyncOption NoSync
+$vhdx = Read-XmlManifest "D:\AppAttachPackages\simplenote\2.21.0.0\vhdx\Simplenote-win-2.21.0-x64.vhdx"
 
-$result | Export-Csv Results\final.csv
+$cim = Read-XmlManifest -Path "D:\AppAttachPackages\simplenote\2.21.0.0\cim\Simplenote-win-2.21.0-x64.cim"
+
+
+
+$appx = Read-XmlManifest "D:\MSIXPackages\simplenote\2.21.0.0\Simplenote-win-2.21.0-x64.appx"
+
+$appx
+
+#$result = Test-MsixToAppAttach -NoDownload -SyncOption Mirror
+
+#$result | Export-Csv Results\final.csv
+
+#>
 <#
-$a = Import-Csv Results\20221122T1245-FullAppList.csv
+$a = Import-Csv Results\20221126T1015-FullAppList.csv
 
 $msixResult = $a | ForEach-Object -Parallel {
     . .\Functions\Private\Get-WPMRestApp.ps1
@@ -27,15 +39,15 @@ $msixResult = $a | ForEach-Object -Parallel {
 $filename = (get-date -Format FileDateTime).Substring(0, 13) + '-MsixApps.csv'
 
 $msixResult | Export-Csv (Join-Path '.\results' $filename) -Force
-#>
 
+#>
 <#
 $filename = (get-date -Format FileDateTime).Substring(0, 13) + '-x64MsixApps.csv'
 
-Import-Csv Results\20221122T1253-MsixApps.csv | Where-Object {$_.architecture -eq 'x64'} | Export-Csv (Join-Path '.\results' $filename) -Force
+Import-Csv Results\20221126T1018-MsixApps.csv | Where-Object {$_.architecture -eq 'x64'} | Export-Csv (Join-Path '.\results' $filename) -Force
 #>
 
-#Get-MSIXPackages -ListPath Results\20221122T1256-x64MsixApps.csv -PassThru -DestPath C:\MSIXPackages
+#Get-MSIXPackages -ListPath Results\20221126T1018-x64MsixApps.csv -PassThru -DestPath C:\MSIXPackages
 
 #$files = Get-ChildItem "D:\MSIXPackages\Microsoft.WindowsTerminalPreview\1.15.2282.0\CascadiaPackage_1.15.2282.0_x64.msix" -File 
 

@@ -8,43 +8,87 @@ function Read-XmlManifest {
             ValuefromPipeline = $true,
             Mandatory = $true
         )]
+        [ValidateScript({
+                if (-Not ($_ | Test-Path) ) { throw "File or folder does not exist" }
+                if (-Not ($_ | Test-Path -PathType Leaf) ) { throw "The Path argument must be a file. Folder paths are not allowed." }
+                if ($_ -notmatch "\.msix$|\.vhdx?$|\.appx$|\.cim$|(?:\.msi|\.app)xbundle$") {
+                    throw "The file specified must be either of type disk image or application package"
+                }
+                return $true
+            })]
         [Alias('FullName')]
-        [System.String]$PathToPackage
+        [System.IO.FileInfo]$Path
     )
 
     begin {
         Set-StrictMode -Version Latest
+        #requires -RunAsAdministrator
+        #requires -Modules CimDiskImage
     } # begin
     process {
 
-        $fileInfo = Get-ChildItem -Path $PathToPackage
+        $fileInfo = Get-ChildItem -Path $Path
+        $fileToRead = 'AppxManifest.xml'
 
-        If ($fileInfo.Extension -like "*bundle*"){
-            $fileToRead = 'AppxBundleManifest.xml'
+        if ($fileInfo.Extension -like ".vhd?") {
+
+            $mount = Mount-FslDisk -Path $Path -ReadOnly -PassThru
+
+            $fileInfo = Get-ChildItem -Path $mount.Path -Filter $fileToRead -Recurse
+            [xml]$xml = Get-Content $fileInfo.FullName
+
+            $mount | Dismount-FslDisk
+            
         }
-        Else {
-            $fileToRead = 'AppxManifest.xml'
+
+        if ($fileInfo.Extension -eq '.cim') {
+            if ($null -eq (Get-Module cimdiskimage -ListAvailable)) {
+                Write-Error "Reading the manifest file from a cim disk image requires the use of the cimdiskimage module, use Install-Module CimDiskImage"
+                continue
+            }
+
+            $tmpFolder = $Env:TEMP
+            $RandomName = (New-Guid).guid
+            $tempDirPath = New-Item -ItemType Directory -Path (Join-Path $tmpFolder $randomName) 
+
+            $mount = Mount-CimDiskImage -ImagePath $Path -MountPath $TempDirPath -PassThru
+
+            $fileInfo = Get-ChildItem -Path $mount.Path -Filter $fileToRead -Recurse
+            [xml]$xml = Get-Content $fileInfo.FullName
+
+            $mount | Dismount-CimDiskImage
+
+            $tempDirPath | Remove-Item
+            
         }
 
-        Add-Type -assembly "system.io.compression.filesystem"
-        $zip = [io.compression.zipfile]::OpenRead($PathToPackage)
-        $file = $zip.Entries | where-object { $_.Name -eq $fileToRead}
+        if ($fileInfo.Extension -like "*appx*" -or $fileInfo.Extension -like "*msix*") {
 
-        $stream = $file.Open()
-        $reader = New-Object IO.StreamReader($stream)
-        [xml]$xml = $reader.ReadToEnd()
+            if ($fileInfo.Extension -like "*bundle*") {
+                $fileToRead = 'AppxBundleManifest.xml'
+            }
 
-        $reader.Close()
-        $stream.Close()
-        $zip.Dispose()
+            Add-Type -assembly "system.io.compression.filesystem"
+            $zip = [io.compression.zipfile]::OpenRead($Path)
+            $file = $zip.Entries | where-object { $_.Name -eq $fileToRead }
+    
+            $stream = $file.Open()
+            $reader = New-Object IO.StreamReader($stream)
+            [xml]$xml = $reader.ReadToEnd()
+    
+            $reader.Close()
+            $stream.Close()
+            $zip.Dispose()
 
-        If ($fileToRead -eq 'AppxBundleManifest.xml'){
+        }
+
+        if ($fileToRead -eq 'AppxBundleManifest.xml') {
             Write-Output $xml.Bundle
         }
-        Else {
-            Write-Output $xml.Package
+        else {
+            $output = $xml.Package | Select-Object Identity, Properties, Resources, Dependencies, Capabilities, Applications
+            Write-Output $output
         }
-       
     } # process
     end {} # end
 }  #function Read-XmlManifest
