@@ -4,4 +4,4 @@ $appDetail = foreach ($app in $appList) {
     Find-EvergreenApp $app | Get-EvergreenApp -ErrorAction SilentlyContinue -WarningAction SilentlyContinue | Where-Object {$_.Type -eq 'msix' -and $_.Architecture -eq 'x64'}
 }
 
-$appDetail | Get-MSIXPackages -DestPath C:\MSIXPackages -PassThru
+$appDetail | Get-MSIXPackages -DestPath D:\MSIXPackages -PassThru

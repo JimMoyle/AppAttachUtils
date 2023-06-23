@@ -13,7 +13,8 @@ function Convert-MSIXToAppAttach {
         [Parameter(
             ValuefromPipelineByPropertyName = $true
         )]
-        [System.String]$DestPath = 'D:\AppAttachPackages',
+        [Alias('DestPath')]
+        [System.String]$DestinationPath = 'D:\AppAttachPackages',
 
         [Parameter(
             ValuefromPipelineByPropertyName = $true
@@ -39,12 +40,38 @@ function Convert-MSIXToAppAttach {
         [Parameter(
             ValuefromPipelineByPropertyName = $true
         )]
-        [int]$VhdxMultiplierLimit = 21
+        [int]$VhdxMultiplierLimit = 21,
+
+        [Parameter(
+            ValuefromPipelineByPropertyName = $true
+        )]
+        [Switch]$NoMsixMgrUpdate,
+
+        [Parameter(
+            ValuefromPipelineByPropertyName = $true
+        )]
+        [string]$MsixMgrLocation = 'C:\Program Files\MSIXMGR'
+
+        
     )
 
     begin {
         #requires -RunAsAdministrator
         Set-StrictMode -Version Latest
+
+        if (-not ($NoMsixMgrUpdate)) {
+
+            $zipLocation = Join-Path $env:TEMP 'Msixmgr.zip'
+
+            Invoke-WebRequest https://aka.ms/msixmgr -OutFile $zipLocation
+
+            if (-not (Test-Path $MsixMgrLocation)) {
+                New-Item -ItemType Directory$MsixMgrLocation
+            }
+
+            Expand-Archive -Path $zipLocation -DestinationPath $MsixMgrLocation -Force
+
+        }  
         
         #. .\Read-XmlManifest.ps1
     } # begin
@@ -56,7 +83,7 @@ function Convert-MSIXToAppAttach {
             return
         }
 
-        $manifest = Read-XmlManifest -PathToPackage $Path
+        $manifest = Read-XmlManifest -Path $Path
 
         $version = $manifest.Identity.Version
 
@@ -81,11 +108,11 @@ function Convert-MSIXToAppAttach {
         
         foreach ($extension in $Type) {
 
-            $directoryPath = Join-Path $DestPath (Join-Path $name (Join-Path $version $extension ))
+            $directoryPath = Join-Path $DestinationPath (Join-Path $name (Join-Path $version $extension ))
             $targetPath = (Join-Path $directoryPath $fileInfo.Name).Replace($fileInfo.Extension, ('.' + $extension))
 
             if (Test-Path $targetPath) {
-                if ($PassThru){
+                if ($PassThru) {
                     $out = [PSCustomObject]@{
                         FullName = $targetPath
                     }
@@ -95,9 +122,11 @@ function Convert-MSIXToAppAttach {
             }
             if (-not(Test-Path $directoryPath)) {
                 New-Item -ItemType Directory $directoryPath | Out-Null
-            }
-            $result = & 'C:\Program Files\MSIXMGR\msixmgr.exe' -Unpack -packagePath $Path -destination $targetPath -applyacls -create -filetype $extension -rootDirectory apps -vhdSize $vhdSize
+            }    
+            
+            $exePath = (Join-Path $MsixMgrLocation 'msixmgr.exe').ToString()
 
+            $result = & $exePath -Unpack -packagePath $Path -destination $targetPath -applyacls -create -filetype $extension -rootDirectory apps -vhdSize $vhdSize
 
             switch ($true) {
                 { $result -like "Successfully created the CIM file*" } { $completed = $true; break }
@@ -112,7 +141,7 @@ function Convert-MSIXToAppAttach {
 
                     $splatConvertMSIXToAppAttach = @{
                         Path           = $Path
-                        DestPath       = $DestPath
+                        DestinationPath       = $DestinationPath
                         Type           = 'vhdx'
                         PassThru       = $true
                         VhdxMultiplier = $VhdxMultiplier * 1.5

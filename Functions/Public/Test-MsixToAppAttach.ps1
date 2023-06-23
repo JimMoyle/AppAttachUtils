@@ -3,10 +3,7 @@ function Test-MsixToAppAttach {
 
     Param (
         [Parameter(
-            Position = 0,
-            ValuefromPipelineByPropertyName = $true,
-            ValuefromPipeline = $true,
-            Mandatory = $true
+            ValuefromPipelineByPropertyName = $true
         )]
         [Switch]$NoDownload,
 
@@ -148,7 +145,7 @@ function Test-MsixToAppAttach {
             HostPoolName = $W11HostPoolName
         }
         if ($TestAllDiskImages) {
-            $msixPackages = 
+            #$msixPackages = 
         }
  
         $msixPackages = foreach ($diskImage in $msixPackages) {

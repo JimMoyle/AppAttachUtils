@@ -13,15 +13,15 @@ Foreach ($import in $Private) {
 
 #. .\Functions\Public\Test-MsixToAppAttach.ps1
 
-$vhdx = Read-XmlManifest "D:\AppAttachPackages\simplenote\2.21.0.0\vhdx\Simplenote-win-2.21.0-x64.vhdx"
+#$vhdx = Read-XmlManifest "D:\AppAttachPackages\simplenote\2.21.0.0\vhdx\Simplenote-win-2.21.0-x64.vhdx"
 
-$cim = Read-XmlManifest -Path "D:\AppAttachPackages\simplenote\2.21.0.0\cim\Simplenote-win-2.21.0-x64.cim"
+#$cim = Read-XmlManifest -Path "D:\AppAttachPackages\simplenote\2.21.0.0\cim\Simplenote-win-2.21.0-x64.cim"
 
 
 
-$appx = Read-XmlManifest "D:\MSIXPackages\simplenote\2.21.0.0\Simplenote-win-2.21.0-x64.appx"
+#$appx = Read-XmlManifest "D:\MSIXPackages\simplenote\2.21.0.0\Simplenote-win-2.21.0-x64.appx"
 
-$appx
+#$appx
 
 #$result = Test-MsixToAppAttach -NoDownload -SyncOption Mirror
 
@@ -29,7 +29,7 @@ $appx
 
 #>
 <#
-$a = Import-Csv Results\20221126T1015-FullAppList.csv
+$a = Import-Csv Results\20230512T1403-FullAppList.csv
 
 $msixResult = $a | ForEach-Object -Parallel {
     . .\Functions\Private\Get-WPMRestApp.ps1
@@ -39,15 +39,15 @@ $msixResult = $a | ForEach-Object -Parallel {
 $filename = (get-date -Format FileDateTime).Substring(0, 13) + '-MsixApps.csv'
 
 $msixResult | Export-Csv (Join-Path '.\results' $filename) -Force
-
 #>
+
 <#
 $filename = (get-date -Format FileDateTime).Substring(0, 13) + '-x64MsixApps.csv'
 
-Import-Csv Results\20221126T1018-MsixApps.csv | Where-Object {$_.architecture -eq 'x64'} | Export-Csv (Join-Path '.\results' $filename) -Force
+Import-Csv Results\20230512T1406-MsixApps.csv | Where-Object {$_.architecture -eq 'x64'} | Export-Csv (Join-Path '.\results' $filename) -Force
 #>
 
-#Get-MSIXPackages -ListPath Results\20221126T1018-x64MsixApps.csv -PassThru -DestPath C:\MSIXPackages
+#Get-MSIXPackages -ListPath Results\20230512T1409-x64MsixApps.csv -PassThru -DestPath D:\MSIXPackages
 
 #$files = Get-ChildItem "D:\MSIXPackages\Microsoft.WindowsTerminalPreview\1.15.2282.0\CascadiaPackage_1.15.2282.0_x64.msix" -File 
 
@@ -68,6 +68,6 @@ Import-Csv Results\20221126T1018-MsixApps.csv | Where-Object {$_.architecture -e
 #$icons | Sort-Object -Property Area -Descending | select -First 1
 
 #Test-AppAttachManifest 'D:\AppAttachPackages\Mozilla.MozillaFirefox\104.0.0.0\cim\Firefox Setup 104.0.cim'
-#Sync-PackagesToAzure -Verbose
+#Sync-PackagesToAzure -Verbose -PassThru
 
 #Expand-MsixDiskImage -Url 'https://avdtoolsmsix.file.core.windows.net/appattach/AppAttachPackages/Mozilla.MozillaFirefox/107.0.0.0/vhdx/Firefox%20Setup%20107.0.vhdx' -HostPoolName 'Win10MsixTest' -ResourceGroupName 'AVDPermanent'

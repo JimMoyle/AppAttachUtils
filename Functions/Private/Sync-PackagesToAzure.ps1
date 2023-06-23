@@ -10,7 +10,7 @@ function Sync-PackagesToAzure {
         [Parameter(
             ValuefromPipelineByPropertyName = $true
         )]
-        [System.String]$RemotePath = 'Y:\AppAttachPackages\',
+        [System.String]$RemotePath = 'Z:\AppAttachPackages\',
 
         [Parameter(
             ValuefromPipelineByPropertyName = $true
@@ -27,6 +27,12 @@ function Sync-PackagesToAzure {
         Set-StrictMode -Version Latest
     } # begin
     process {
+
+        if (-not (Test-Path $RemotePath)) {
+            Write-Error "$RemotePath not found"
+            continue
+        }
+
         if ($NoMirror) {
             $roboresult = robocopy $LocalPath $RemotePath /s /xx
         }
