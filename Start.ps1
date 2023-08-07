@@ -41,7 +41,7 @@ $filename = (get-date -Format FileDateTime).Substring(0, 13) + '-MsixApps.csv'
 $msixResult | Export-Csv (Join-Path '.\results' $filename) -Force
 #>
 
-
+<#
 $filename = (get-date -Format FileDateTime).Substring(0, 13) + '-x64MsixApps.csv'
 
 Import-Csv Results\20230512T1406-MsixApps.csv | Where-Object {$_.architecture -eq 'x64'} | Export-Csv (Join-Path '.\results' $filename) -Force
@@ -51,11 +51,11 @@ Import-Csv Results\20230512T1406-MsixApps.csv | Where-Object {$_.architecture -e
 
 #$files = Get-ChildItem "D:\MSIXPackages\Microsoft.WindowsTerminalPreview\1.15.2282.0\CascadiaPackage_1.15.2282.0_x64.msix" -File 
 
-#$files = Get-ChildItem "D:\MSIXPackages" -File -Recurse
+$files = Get-ChildItem "D:\MSIXPackages" -File -Recurse
 
 #$files = Get-ChildItem  "D:\App Attach Packages" -File -Recurse -Filter "*.vhdx"
 
-#$files | Convert-MSIXToAppAttach -Type 'cim','vhdx' -PassThru
+$files | Convert-MSIXToAppAttach -Type 'cim','vhdx' -PassThru
 
 #Get-ChildItem "C:\Users\jimoyle\Downloads\CascadiaPackage_1.15.2282.0_x64.msix" -File | Move-MsixPackage
 

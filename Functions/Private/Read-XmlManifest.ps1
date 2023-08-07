@@ -64,11 +64,7 @@ function Read-XmlManifest {
 
         if ($fileInfo.Extension -like "*appx*" -or $fileInfo.Extension -like "*msix*") {
 
-            if ($fileInfo.Extension -eq ".msixbundle") {
-                $fileToRead = 'AppxBundleManifest.xml'
-            }
-
-            if ($fileInfo.Extension -eq ".appxbundle") {
+            if ($fileInfo.Extension -like ".*bundle") {
                 $fileToRead = 'AppxMetadata/AppxBundleManifest.xml'
             }
 

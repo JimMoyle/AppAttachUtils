@@ -96,16 +96,7 @@ function Convert-MSIXToAppAttach {
         New-Item $TempExpandPath -ItemType Directory  | Out-Null
 
         Expand-Archive -Path $Path -DestinationPath $TempExpandPath 
-
-        $vhdSize = ((Get-ChildItem $TempExpandPath -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB) * $VhdxMultiplier
-
-        $vhdSize = [Math]::Ceiling($vhdSize)
-
-        if ($vhdSize -lt 10) {
-            $vhdSize = 10
-        }
-
-        
+       
         foreach ($extension in $Type) {
 
             $directoryPath = Join-Path $DestinationPath (Join-Path $name (Join-Path $version $extension ))
@@ -126,7 +117,7 @@ function Convert-MSIXToAppAttach {
             
             $exePath = (Join-Path $MsixMgrLocation 'msixmgr.exe').ToString()
 
-            $result = & $exePath -Unpack -packagePath $Path -destination $targetPath -applyacls -create -filetype $extension -rootDirectory apps -vhdSize $vhdSize
+            $result = & $exePath -Unpack -packagePath $Path -destination $targetPath -applyacls -create -filetype $extension -rootDirectory apps
 
             switch ($true) {
                 { $result -like "Successfully created the CIM file*" } { $completed = $true; break }
