@@ -64,13 +64,17 @@ function Read-XmlManifest {
 
         if ($fileInfo.Extension -like "*appx*" -or $fileInfo.Extension -like "*msix*") {
 
-            if ($fileInfo.Extension -like "*bundle*") {
+            if ($fileInfo.Extension -eq ".msixbundle") {
                 $fileToRead = 'AppxBundleManifest.xml'
+            }
+
+            if ($fileInfo.Extension -eq ".appxbundle") {
+                $fileToRead = 'AppxMetadata/AppxBundleManifest.xml'
             }
 
             Add-Type -assembly "system.io.compression.filesystem"
             $zip = [io.compression.zipfile]::OpenRead($Path)
-            $file = $zip.Entries | where-object { $_.Name -eq $fileToRead }
+            $file = $zip.Entries | where-object { $_.FullName -eq $fileToRead }
     
             $stream = $file.Open()
             $reader = New-Object IO.StreamReader($stream)
@@ -82,7 +86,7 @@ function Read-XmlManifest {
 
         }
 
-        if ($fileToRead -eq 'AppxBundleManifest.xml') {
+        if ($fileToRead -like "*AppxBundleManifest.xml") {
             Write-Output $xml.Bundle
         }
         else {

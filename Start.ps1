@@ -29,7 +29,7 @@ Foreach ($import in $Private) {
 
 #>
 <#
-$a = Import-Csv Results\20230512T1403-FullAppList.csv
+$a = Import-Csv Results\20230707T1107-FullAppList.csv
 
 $msixResult = $a | ForEach-Object -Parallel {
     . .\Functions\Private\Get-WPMRestApp.ps1
@@ -41,7 +41,7 @@ $filename = (get-date -Format FileDateTime).Substring(0, 13) + '-MsixApps.csv'
 $msixResult | Export-Csv (Join-Path '.\results' $filename) -Force
 #>
 
-<#
+
 $filename = (get-date -Format FileDateTime).Substring(0, 13) + '-x64MsixApps.csv'
 
 Import-Csv Results\20230512T1406-MsixApps.csv | Where-Object {$_.architecture -eq 'x64'} | Export-Csv (Join-Path '.\results' $filename) -Force

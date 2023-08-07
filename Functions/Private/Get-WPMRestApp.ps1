@@ -73,3 +73,5 @@ function Get-WPMRestApp {
     } # process
     end {} # end
 }  #function Get-WPMRestApp
+
+$uri = 'https://storeedgefd.dsx.mp.microsoft.com/v9.0/packageManifests/'
