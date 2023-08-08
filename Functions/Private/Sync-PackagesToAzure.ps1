@@ -34,7 +34,7 @@ function Sync-PackagesToAzure {
         }
 
         if ($NoMirror) {
-            $roboresult = robocopy $LocalPath $RemotePath /s /xx
+            $roboresult = robocopy $LocalPath $RemotePath /s /xx /v
         }
         else {
             $roboresult = robocopy $LocalPath $RemotePath /mir
@@ -43,8 +43,6 @@ function Sync-PackagesToAzure {
         if ($PassThru) {
             Write-Output $roboresult
         }
-        
-        
     } # process
     end {} # end
 }  #function Sync-PackagesToAzure

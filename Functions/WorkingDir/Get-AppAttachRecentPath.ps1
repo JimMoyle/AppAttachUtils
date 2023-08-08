@@ -1,6 +1,6 @@
 #Get-AppAttachRecentPath
 
-$Path = 'Y:\Mozilla.MozillaFirefox'
+$Path = 'Z:\AppAttachPackages\Mozilla.MozillaFirefox'
 
 $versionFolders = Get-ChildItem -Path $Path -Directory
 

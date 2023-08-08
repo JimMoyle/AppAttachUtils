@@ -29,7 +29,7 @@ Foreach ($import in $Private) {
 
 #>
 <#
-$a = Import-Csv Results\20230707T1107-FullAppList.csv
+$a = Import-Csv Results\20230808T1355-FullAppList.csv
 
 $msixResult = $a | ForEach-Object -Parallel {
     . .\Functions\Private\Get-WPMRestApp.ps1
@@ -47,7 +47,7 @@ $filename = (get-date -Format FileDateTime).Substring(0, 13) + '-x64MsixApps.csv
 Import-Csv Results\20230512T1406-MsixApps.csv | Where-Object {$_.architecture -eq 'x64'} | Export-Csv (Join-Path '.\results' $filename) -Force
 #>
 
-#Get-MSIXPackages -ListPath Results\20230512T1409-x64MsixApps.csv -PassThru -DestPath D:\MSIXPackages
+#Get-MSIXPackages -ListPath (Join-Path '.\results' $filename) -PassThru -DestPath D:\MSIXPackages
 
 #$files = Get-ChildItem "D:\MSIXPackages\Microsoft.WindowsTerminalPreview\1.15.2282.0\CascadiaPackage_1.15.2282.0_x64.msix" -File 
 
@@ -68,6 +68,6 @@ $files | Convert-MSIXToAppAttach -Type 'cim','vhdx' -PassThru
 #$icons | Sort-Object -Property Area -Descending | select -First 1
 
 #Test-AppAttachManifest 'D:\AppAttachPackages\Mozilla.MozillaFirefox\104.0.0.0\cim\Firefox Setup 104.0.cim'
-#Sync-PackagesToAzure -Verbose -PassThru
+Sync-PackagesToAzure -PassThru
 
 #Expand-MsixDiskImage -Url 'https://avdtoolsmsix.file.core.windows.net/appattach/AppAttachPackages/Mozilla.MozillaFirefox/107.0.0.0/vhdx/Firefox%20Setup%20107.0.vhdx' -HostPoolName 'Win10MsixTest' -ResourceGroupName 'AVDPermanent'
