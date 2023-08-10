@@ -1,3 +1,0 @@
-$resourceGroup = 'DeleteMe'
-$HostPoolName = 'blah'
-

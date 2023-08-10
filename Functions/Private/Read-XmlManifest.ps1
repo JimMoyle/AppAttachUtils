@@ -1,3 +1,34 @@
+<#
+.SYNOPSIS
+    Reads the manifest file of an application package or disk image.
+
+.DESCRIPTION
+    This function reads the manifest file of an application package or disk image. The manifest file contains information about the package, such as its identity, properties, resources, dependencies, capabilities, and applications.
+
+.PARAMETER Path
+    Specifies the path to the application package or disk image. This parameter is mandatory.
+
+.INPUTS
+    System.IO.FileInfo
+
+.OUTPUTS
+    System.Management.Automation.PSCustomObject
+
+.EXAMPLE
+    Read-XmlManifest -Path "C:\MyAppPackage.appx"
+
+    This example reads the manifest file of the "MyAppPackage.appx" application package.
+
+.EXAMPLE
+    Read-XmlManifest -Path "D:\MyDiskImage.vhdx"
+
+    This example reads the manifest file of the "MyDiskImage.vhdx" disk image.
+
+.NOTES
+    Author: Unknown
+    Last Edit: Unknown
+#>
+
 function Read-XmlManifest {
     [CmdletBinding()]
 
@@ -24,28 +55,40 @@ function Read-XmlManifest {
         Set-StrictMode -Version Latest
         #requires -RunAsAdministrator
         #requires -Modules CimDiskImage
+        # This function is used to get the path of the manifest file of an application package or disk image.
+        function Get-ManifestPath {
+            param ($Path)
+            # Set the names of the manifest files for an application package and bundle respectively.
+            $bundleFile = 'AppxBundleManifest.xml'
+            $file = 'AppxManifest.xml'
+            # Get the manifest file(s) in the specified path.
+            $fileInfo = Get-ChildItem -Path $Path -Filter $bundleFile -Recurse
+            # If there is one manifest bundle file found, output it.
+            if (($fileInfo | Measure-Object).Count -eq 1) {
+                Write-Output $fileInfo
+            }
+            # If there are no manifest bundle files found, output the one for an application package.
+            else {
+                $fileInfo = Get-ChildItem -Path $Path -Filter $file -Recurse
+                Write-Output $fileInfo
+            }
+        }
     } # begin
     process {
 
         $fileInfo = Get-ChildItem -Path $Path
-        $fileToRead = 'AppxManifest.xml'
 
         if ($fileInfo.Extension -like ".vhd?") {
 
             $mount = Mount-FslDisk -Path $Path -ReadOnly -PassThru
 
-            $fileInfo = Get-ChildItem -Path $mount.Path -Filter $fileToRead -Recurse
+            $fileInfo = Get-ManifestPath -Path $mount.Path
             [xml]$xml = Get-Content $fileInfo.FullName
 
             $mount | Dismount-FslDisk
-            
         }
 
         if ($fileInfo.Extension -eq '.cim') {
-            if ($null -eq (Get-Module cimdiskimage -ListAvailable)) {
-                Write-Error "Reading the manifest file from a cim disk image requires the use of the cimdiskimage module, use Install-Module CimDiskImage"
-                continue
-            }
 
             $tmpFolder = $Env:TEMP
             $RandomName = (New-Guid).guid
@@ -53,19 +96,21 @@ function Read-XmlManifest {
 
             $mount = Mount-CimDiskImage -ImagePath $Path -MountPath $TempDirPath -PassThru
 
-            $fileInfo = Get-ChildItem -Path $mount.Path -Filter $fileToRead -Recurse
+            $fileInfo = Get-ManifestPath -Path $mount.Path
             [xml]$xml = Get-Content $fileInfo.FullName
 
             $mount | Dismount-CimDiskImage
 
             $tempDirPath | Remove-Item
-            
         }
 
         if ($fileInfo.Extension -like "*appx*" -or $fileInfo.Extension -like "*msix*") {
 
             if ($fileInfo.Extension -like ".*bundle") {
                 $fileToRead = 'AppxMetadata/AppxBundleManifest.xml'
+            }
+            else{
+                $fileToRead = 'AppxManifest.xml'
             }
 
             Add-Type -assembly "system.io.compression.filesystem"
@@ -79,16 +124,15 @@ function Read-XmlManifest {
             $reader.Close()
             $stream.Close()
             $zip.Dispose()
-
         }
 
-        if ($fileToRead -like "*AppxBundleManifest.xml") {
-            Write-Output $xml.Bundle
+        if ($xml.psobject.Properties.Name -contains 'Bundle') {
+            $output = $xml.Bundle | Select-Object Identity
         }
         else {
-            $output = $xml.Package | Select-Object Identity, Properties, Resources, Dependencies, Capabilities, Applications
-            Write-Output $output
+            $output = $xml.Package | Select-Object Identity
         }
+        Write-Output $output
     } # process
     end {} # end
 }  #function Read-XmlManifest

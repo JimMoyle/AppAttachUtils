@@ -1,4 +1,4 @@
-function New-MsixEidGroup {
+function New-EidGraphGroup {
     [CmdletBinding()]
 
     Param (
@@ -8,8 +8,8 @@ function New-MsixEidGroup {
             ValuefromPipeline = $true,
             Mandatory = $true
         )]
-        [Alias('FullName')]
-        [System.String]$Path
+        [Alias('GroupName')]
+        [System.String]$Name
     )
 
     begin {
@@ -23,15 +23,12 @@ function New-MsixEidGroup {
     } # begin
     process {
 
-        $m = read-xmlManifest 'D:\MSIXPackages\Mozilla.MozillaFirefox\113.0.1.0\Firefox%20Setup%20113.0.1.msix'
-        $groupName = $m.Properties.DisplayName
-
-        if ((Get-MgGroup -Filter "displayName eq '$GroupName'" | Measure-Object | Select-Object -ExpandProperty Count) -eq 1) {
-            Write-Information "Group $GroupName already exists"
-            $group = Get-MgGroup -Filter "displayName eq '$GroupName'"
+        if ((Get-MgGroup -Filter "displayName eq '$Name'" | Measure-Object | Select-Object -ExpandProperty Count) -eq 1) {
+            Write-Information "Group $Name already exists"
+            $group = Get-MgGroup -Filter "displayName eq '$Name'"
         }
         else {
-            $group = New-MgGroup -DisplayName $GroupName -Description $m.Properties.PublisherDisplayName -MailEnabled:$False -SecurityEnabled -MailNickName $m.Identity.Name
+            $group = New-MgGroup -DisplayName $Name -Description (($m.bundle.Identity.Attributes).'#text' -join ' ') -MailEnabled:$False -SecurityEnabled -MailNickName $m.Identity.Name
         }
 
         Write-Output $group
