@@ -12,7 +12,7 @@ Foreach ($import in $Private) {
 }
 
 
-#& Functions\Private\Get-WPMRestAll.ps1
+#& Functions\WorkingDir\Get-WPMRestAll.ps1
 
 
 <#

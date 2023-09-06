@@ -13,7 +13,7 @@ function Get-AppAttachRecentVersionPath {
         [Parameter(
             ValuefromPipelineByPropertyName = $true
         )]
-        [System.String]$GetVhdx
+        [Switch]$GetVhdx
     )
 
     begin {

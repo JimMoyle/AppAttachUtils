@@ -2,3 +2,7 @@
 SasToken.txt
 start.ps1
 test.ps1
+cleanup.ps1
+CleanupRole.ps1
+remoteapp.ps1
+addtogroup.ps1
