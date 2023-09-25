@@ -38,3 +38,5 @@ $appList = While ($continue -ne $false) {
 $filename = (get-date -Format FileDateTime).Substring(0, 13) + '-FullAppList.csv'
 
 $appList | Export-Csv (Join-Path '.\results' $filename) -Force
+
+Write-Output (Join-Path '.\results' $filename)

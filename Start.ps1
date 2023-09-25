@@ -11,30 +11,31 @@ Foreach ($import in $Private) {
     }
 }
 
+import-module "C:\Az.DesktopVirtualization\3.4.4\Az.DesktopVirtualization.psd1"
 
-#& Functions\WorkingDir\Get-WPMRestAll.ps1
+if (-not (Test-Path 'Z:\AppAttachPackages')) {
+    Write-Error 'connect to Azure Files first'
+    return
+}
 
+$allAppsFile = & Functions\WorkingDir\Get-WPMRestAll.ps1
 
-<#
-$a = Import-Csv Results\20230810T1742-FullAppList.csv
+$a = Import-Csv $allAppsFile
 
 $msixResult = $a | ForEach-Object -Parallel {
     . .\Functions\Private\Get-WPMRestApp.ps1
    $_ | Get-WPMRestApp
 } -ThrottleLimit 16
 
-$filename = (get-date -Format FileDateTime).Substring(0, 13) + '-MsixApps.csv'
+$msixAppsFile = Join-Path '.\results' ((get-date -Format FileDateTime).Substring(0, 13) + '-MsixApps.csv')
 
-$msixResult | Export-Csv (Join-Path '.\results' $filename) -Force
-#>
+$msixResult | Export-Csv  $msixAppsFile -Force
 
-<#
-$filename = (get-date -Format FileDateTime).Substring(0, 13) + '-x64MsixApps.csv'
+$64BitMsixAppsFile = (get-date -Format FileDateTime).Substring(0, 13) + '-x64MsixApps.csv'
 
-Import-Csv Results\20230512T1406-MsixApps.csv | Where-Object {$_.architecture -eq 'x64'} | Export-Csv (Join-Path '.\results' $filename) -Force
-#>
+Import-Csv $msixAppsFile | Where-Object {$_.architecture -eq 'x64'} | Export-Csv (Join-Path '.\results' $64BitMsixAppsFile) -Force
 
-#Get-MSIXPackages -ListPath (Join-Path '.\results' $filename) -PassThru -DestPath D:\MSIXPackages
+Get-MSIXPackages -ListPath (Join-Path '.\results' $64BitMsixAppsFile) -PassThru -DestPath D:\MSIXPackages
 
 $files = Get-ChildItem "D:\MSIXPackages" -File -Recurse
 
