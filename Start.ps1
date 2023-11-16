@@ -1,9 +1,11 @@
+#requires -RunAsAdministrator
+
 $Private = @( Get-ChildItem -Path Functions\Private\*.ps1 -ErrorAction SilentlyContinue )
 
 #Dot source the files
 Foreach ($import in $Private) {
     Try {
-        Write-Verbose "Importing $($Import.FullName)"
+        Write-Output "Importing $($Import.FullName)"
         . $import.fullname
     }
     Catch {
