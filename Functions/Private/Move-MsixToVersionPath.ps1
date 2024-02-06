@@ -8,7 +8,7 @@ function Move-MsixToVersionPath {
             ValuefromPipeline = $true,
             Mandatory = $true
         )]
-        [Alias('FullName')]
+        [Alias('PSPath')]
         [System.String]$Path,
 
         [Parameter(
