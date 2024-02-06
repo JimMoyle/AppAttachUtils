@@ -43,7 +43,7 @@ function Get-WPMRestApp {
 
         $packageDetail = $package.Data.Versions | 
             Select-Object @{Name = 'PackageVersion'; Expression = { [Version]$_.PackageVersion } }, Installers | 
-            Sort-Object -Property Version -Descending | 
+            Sort-Object -Property PackageVersion -Descending | 
             Select-Object -First 1
 
         foreach ($installer in $packageDetail.Installers) {
@@ -73,5 +73,3 @@ function Get-WPMRestApp {
     } # process
     end {} # end
 }  #function Get-WPMRestApp
-
-$uri = 'https://storeedgefd.dsx.mp.microsoft.com/v9.0/packageManifests/'

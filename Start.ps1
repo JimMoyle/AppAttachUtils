@@ -1,5 +1,12 @@
 #requires -RunAsAdministrator
 
+$packagePath = 'Z:\AppAttachPackages' # if you change this remember to add the param to the function to override the defaults.
+
+if (-not (Test-Path $packagePath)) {
+    Write-Error 'connect to Azure Files first'
+    return
+}
+
 $Private = @( Get-ChildItem -Path Functions\Private\*.ps1 -ErrorAction SilentlyContinue )
 
 #Dot source the files
@@ -15,17 +22,13 @@ Foreach ($import in $Private) {
 
 import-module "C:\Az.DesktopVirtualization\3.4.4\Az.DesktopVirtualization.psd1"
 
-if (-not (Test-Path 'Z:\AppAttachPackages')) {
-    Write-Error 'connect to Azure Files first'
-    return
-}
-
 $allAppsFile = & Functions\WorkingDir\Get-WPMRestAll.ps1
 
 $a = Import-Csv $allAppsFile
 
 $msixResult = $a | ForEach-Object -Parallel {
     . .\Functions\Private\Get-WPMRestApp.ps1
+    
    $_ | Get-WPMRestApp
 } -ThrottleLimit 16
 
