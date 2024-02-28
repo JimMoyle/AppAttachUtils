@@ -72,7 +72,3 @@ function Move-MsixToVersionPath {
     } # process
     end {} # end
 }  #function Move-MsixToVersionPath
-
-# $Path = 'C:\Users\jimoyle\Downloads\5319275A.WhatsAppDesktop_2.2330.7.0_neutral_~_cv1g1gvanyjgm.Msixbundle'
-
-gci "C:\Users\jimoyle\Downloads\*.appx*" -File | Move-MsixToVersionPath -DestPath 'D:\MSIXPackages' -PassThru
